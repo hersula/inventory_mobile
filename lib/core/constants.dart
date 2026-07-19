@@ -11,7 +11,7 @@
 class AppConfig {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000',
+    defaultValue: 'https://inventory.sicerdiq.my.id',
   );
 
   static const String appName = 'Inventory Dashboard';

@@ -23,11 +23,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _refresh();
   }
 
-  void _load() {
-    setState(() => _future = _service.stats());
+  Future<void> _refresh() async {
+    final future = _service.stats();
+    setState(() => _future = future);
+    await future;
   }
 
   @override
@@ -35,17 +37,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
       body: RefreshIndicator(
-        onRefresh: () async {
-          _load();
-          await _future;
-        },
+        onRefresh: _refresh,
         child: FutureBuilder<DashboardStats>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) return const LoadingView();
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const LoadingView();
+            }
             if (snapshot.hasError) {
-              final msg = snapshot.error is ApiException ? (snapshot.error as ApiException).message : 'Gagal memuat data';
-              return ListView(children: [SizedBox(height: 200, child: ErrorView(message: msg, onRetry: _load))]);
+              final msg = snapshot.error is ApiException 
+                  ? (snapshot.error as ApiException).message 
+                  : 'Gagal memuat data';
+              return ListView(
+                children: [
+                  SizedBox(
+                    height: 200, 
+                    child: ErrorView(message: msg, onRetry: _refresh),
+                  ),
+                ],
+              );
             }
             final stats = snapshot.data!;
             return ListView(
@@ -117,17 +127,26 @@ class _ChartCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.slate200)),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(16), 
+        border: Border.all(color: AppColors.slate200),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tren Penjualan vs Pengadaan (6 Bulan)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+          const Text(
+            'Tren Penjualan vs Pengadaan (6 Bulan)', 
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+          ),
           const SizedBox(height: 4),
-          Row(children: [
-            _LegendDot(color: AppColors.brand600, label: 'Penjualan'),
-            const SizedBox(width: 12),
-            _LegendDot(color: AppColors.amber500, label: 'Pengadaan'),
-          ]),
+          Row(
+            children: [
+              _LegendDot(color: AppColors.brand600, label: 'Penjualan'),
+              const SizedBox(width: 12),
+              _LegendDot(color: AppColors.amber500, label: 'Pengadaan'),
+            ],
+          ),
           const SizedBox(height: 12),
           SizedBox(
             height: 180,
@@ -137,18 +156,32 @@ class _ChartCard extends StatelessWidget {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final i = value.toInt();
-                        if (i < 0 || i >= stats.chartMonthly.length) return const SizedBox.shrink();
+                        if (i < 0 || i >= stats.chartMonthly.length) {
+                          return const SizedBox.shrink();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 6),
-                          child: Text(stats.chartMonthly[i].bulan, style: const TextStyle(fontSize: 10, color: AppColors.slate500)),
+                          child: Text(
+                            stats.chartMonthly[i].bulan, 
+                            style: const TextStyle(
+                              fontSize: 10, 
+                              color: AppColors.slate500,
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -156,10 +189,23 @@ class _ChartCard extends StatelessWidget {
                 ),
                 barGroups: [
                   for (int i = 0; i < stats.chartMonthly.length; i++)
-                    BarChartGroupData(x: i, barRods: [
-                      BarChartRodData(toY: stats.chartMonthly[i].penjualan, color: AppColors.brand600, width: 7, borderRadius: BorderRadius.circular(3)),
-                      BarChartRodData(toY: stats.chartMonthly[i].pengadaan, color: AppColors.amber500, width: 7, borderRadius: BorderRadius.circular(3)),
-                    ]),
+                    BarChartGroupData(
+                      x: i, 
+                      barRods: [
+                        BarChartRodData(
+                          toY: stats.chartMonthly[i].penjualan, 
+                          color: AppColors.brand600, 
+                          width: 7, 
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        BarChartRodData(
+                          toY: stats.chartMonthly[i].pengadaan, 
+                          color: AppColors.amber500, 
+                          width: 7, 
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -177,11 +223,27 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 4),
-      Text(label, style: const TextStyle(fontSize: 11, color: AppColors.slate500)),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min, 
+      children: [
+        Container(
+          width: 8, 
+          height: 8, 
+          decoration: BoxDecoration(
+            color: color, 
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label, 
+          style: const TextStyle(
+            fontSize: 11, 
+            color: AppColors.slate500,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -193,41 +255,74 @@ class _LowStockCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.slate200)),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(16), 
+        border: Border.all(color: AppColors.slate200),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: const [
-            Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.amber500),
-            SizedBox(width: 6),
-            Text('Barang Stok Menipis', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
-          ]),
+          Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.amber500),
+              SizedBox(width: 6),
+              Text(
+                'Barang Stok Menipis', 
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           if (items.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('Semua stok barang dalam kondisi aman.', style: TextStyle(color: AppColors.slate400, fontSize: 13)),
+              child: Text(
+                'Semua stok barang dalam kondisi aman.', 
+                style: TextStyle(color: AppColors.slate400, fontSize: 13),
+              ),
             )
           else
             ...items.map((it) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(it.nama, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                            Text(it.kode, style: const TextStyle(fontSize: 11, color: AppColors.slate400)),
-                          ],
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          it.nama, 
+                          style: const TextStyle(
+                            fontSize: 13, 
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      Text('${it.stok}/${it.stokMinimum}', style: const TextStyle(fontSize: 12, color: AppColors.slate500)),
-                      const SizedBox(width: 8),
-                      StatusBadge(it.stok == 0 ? 'Habis' : 'Menipis', tone: it.stok == 0 ? BadgeTone.red : BadgeTone.amber),
-                    ],
+                        Text(
+                          it.kode, 
+                          style: const TextStyle(
+                            fontSize: 11, 
+                            color: AppColors.slate400,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                  Text(
+                    '${it.stok}/${it.stokMinimum}', 
+                    style: const TextStyle(
+                      fontSize: 12, 
+                      color: AppColors.slate500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  StatusBadge(
+                    it.stok == 0 ? 'Habis' : 'Menipis', 
+                    tone: it.stok == 0 ? BadgeTone.red : BadgeTone.amber,
+                  ),
+                ],
+              ),
+            )),
         ],
       ),
     );
@@ -242,21 +337,39 @@ class _TopBarangCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.slate200)),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(16), 
+        border: Border.all(color: AppColors.slate200),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Barang Terlaris', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+          const Text(
+            'Barang Terlaris', 
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+          ),
           const SizedBox(height: 10),
           ...items.map((it) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(it.nama, style: const TextStyle(fontSize: 13))),
-                    Text('${it.terjual} terjual', style: const TextStyle(fontSize: 12, color: AppColors.slate500)),
-                  ],
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    it.nama, 
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
-              )),
+                Text(
+                  '${it.terjual} terjual', 
+                  style: const TextStyle(
+                    fontSize: 12, 
+                    color: AppColors.slate500,
+                  ),
+                ),
+              ],
+            ),
+          )),
         ],
       ),
     );
