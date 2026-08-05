@@ -23,11 +23,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    // Di initState, cukup panggil service sekali. Tidak perlu setState.
+    _future = _service.stats();
   }
 
-  void _load() {
-    setState(() => _future = _service.stats());
+  // Fungsi ini akan menangani refresh, baik dari pull-to-refresh maupun tombol coba lagi.
+  // Mengembalikan Future agar RefreshIndicator tahu kapan harus berhenti.
+  Future<void> _onRefresh() {
+    final newFuture = _service.stats();
+    setState(() {
+      _future = newFuture;
+    });
+    return newFuture;
   }
 
   @override
@@ -35,17 +42,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
       body: RefreshIndicator(
-        onRefresh: () async {
-          _load();
-          await _future;
-        },
+        // Cukup teruskan referensi fungsi _onRefresh.
+        // Indikator akan tampil sampai Future yang dikembalikan selesai.
+        onRefresh: _onRefresh,
         child: FutureBuilder<DashboardStats>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) return const LoadingView();
             if (snapshot.hasError) {
               final msg = snapshot.error is ApiException ? (snapshot.error as ApiException).message : 'Gagal memuat data';
-              return ListView(children: [SizedBox(height: 200, child: ErrorView(message: msg, onRetry: _load))]);
+              return ListView(children: [SizedBox(height: 200, child: ErrorView(message: msg, onRetry: () => _onRefresh()))]);
+            }
+            // Tambahkan pengecekan jika data null setelah future selesai
+            if (!snapshot.hasData) {
+              return ListView(children: [SizedBox(height: 200, child: ErrorView(message: 'Data tidak ditemukan.', onRetry: () => _onRefresh()))]);
             }
             final stats = snapshot.data!;
             return ListView(
@@ -57,7 +67,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.35,
+                  childAspectRatio: 1.06,
+                  padding: EdgeInsets.zero,
                   children: [
                     StatCard(
                       label: 'Total Jenis Barang',
