@@ -423,6 +423,7 @@ class _ItemRow extends StatelessWidget {
           Row(children: [
             Expanded(
               child: TextFormField(
+                key: ValueKey('qty-${item.barangId}'),
                 initialValue: item.qty.toString(),
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Qty', isDense: true),
@@ -433,6 +434,7 @@ class _ItemRow extends StatelessWidget {
             Expanded(
               flex: 2,
               child: TextFormField(
+                key: ValueKey('harga-${item.barangId}'),
                 initialValue: item.hargaSatuan.toStringAsFixed(0),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Harga Satuan', isDense: true),
