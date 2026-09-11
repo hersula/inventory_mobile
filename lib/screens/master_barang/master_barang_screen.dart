@@ -11,6 +11,7 @@ import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/app_feedback.dart';
 import 'barang_form_sheet.dart';
+import 'kartu_stok_screen.dart';
 
 class MasterBarangScreen extends StatefulWidget {
   const MasterBarangScreen({super.key});
@@ -67,6 +68,10 @@ class _MasterBarangScreenState extends State<MasterBarangScreen> {
       builder: (_) => BarangFormSheet(existing: existing, kategoris: _kategoris, onKategoriAdded: (k) => setState(() => _kategoris = [..._kategoris, k])),
     );
     if (saved == true) _load();
+  }
+
+  void _openKartuStok(Barang b) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => KartuStokScreen(barang: b)));
   }
 
   Future<void> _delete(Barang b) async {
@@ -158,8 +163,14 @@ class _MasterBarangScreenState extends State<MasterBarangScreen> {
                                     _MiniStat(label: 'Stok', value: '${b.stok} ${b.satuan}'),
                                     _MiniStat(label: 'Beli', value: Formatters.rupiah(b.hargaBeli)),
                                     _MiniStat(label: 'Jual', value: Formatters.rupiah(b.hargaJual)),
-                                    if (canManage)
-                                      Row(children: [
+                                    Row(children: [
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        icon: const Icon(Icons.history, size: 19, color: AppColors.brand600),
+                                        tooltip: 'Kartu Stok',
+                                        onPressed: () => _openKartuStok(b),
+                                      ),
+                                      if (canManage) ...[
                                         IconButton(
                                           visualDensity: VisualDensity.compact,
                                           icon: const Icon(Icons.edit_outlined, size: 19, color: AppColors.slate500),
@@ -170,7 +181,8 @@ class _MasterBarangScreenState extends State<MasterBarangScreen> {
                                           icon: const Icon(Icons.delete_outline, size: 19, color: AppColors.red500),
                                           onPressed: () => _delete(b),
                                         ),
-                                      ]),
+                                      ],
+                                    ]),
                                   ],
                                 ),
                               ],

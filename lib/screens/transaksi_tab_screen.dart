@@ -4,54 +4,45 @@ import '../core/rbac.dart';
 import '../providers/auth_provider.dart';
 import 'pengadaan/pengadaan_screen.dart';
 import 'penjualan/penjualan_screen.dart';
+import 'retur/retur_screen.dart';
 
-class TransaksiTabScreen extends StatefulWidget {
+/// Menggabungkan Pengadaan, Penjualan, dan Retur dalam satu shell tab —
+/// jumlah tab menyesuaikan permission role user (kalau cuma 1 modul yang
+/// boleh diakses, tampilkan langsung tanpa TabBar).
+class TransaksiTabScreen extends StatelessWidget {
   const TransaksiTabScreen({super.key});
-
-  @override
-  State<TransaksiTabScreen> createState() => _TransaksiTabScreenState();
-}
-
-class _TransaksiTabScreenState extends State<TransaksiTabScreen> with SingleTickerProviderStateMixin {
-  late TabController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final role = context.watch<AuthProvider>().currentUser?.role;
-    final showPengadaan = can(role, 'pengadaan.view');
-    final showPenjualan = can(role, 'penjualan.view');
 
-    if (showPengadaan && !showPenjualan) return const PengadaanScreen(embedded: false);
-    if (!showPengadaan && showPenjualan) return const PenjualanScreen(embedded: false);
+    final visible = <_TransaksiTab>[
+      if (can(role, 'pengadaan.view'))
+        const _TransaksiTab('Pengadaan', PengadaanScreen(embedded: true), PengadaanScreen(embedded: false)),
+      if (can(role, 'penjualan.view'))
+        const _TransaksiTab('Penjualan', PenjualanScreen(embedded: true), PenjualanScreen(embedded: false)),
+      if (can(role, 'retur.view')) const _TransaksiTab('Retur', ReturScreen(embedded: true), ReturScreen(embedded: false)),
+    ];
+
+    if (visible.isEmpty) return const SizedBox.shrink();
+    if (visible.length == 1) return visible.first.standalone;
 
     return DefaultTabController(
-      length: 2,
+      length: visible.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Transaksi'),
-          bottom: const TabBar(
-            tabs: [Tab(text: 'Pengadaan'), Tab(text: 'Penjualan')],
-          ),
+          bottom: TabBar(tabs: visible.map((t) => Tab(text: t.label)).toList()),
         ),
-        body: const TabBarView(
-          children: [
-            PengadaanScreen(embedded: true),
-            PenjualanScreen(embedded: true),
-          ],
-        ),
+        body: TabBarView(children: visible.map((t) => t.embedded).toList()),
       ),
     );
   }
+}
+
+class _TransaksiTab {
+  final String label;
+  final Widget embedded;
+  final Widget standalone;
+  const _TransaksiTab(this.label, this.embedded, this.standalone);
 }

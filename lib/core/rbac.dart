@@ -34,6 +34,8 @@ const Map<AppRole, Set<String>> _rolePermissions = {
     'pengadaan.manage',
     'penjualan.view',
     'penjualan.manage',
+    'retur.view',
+    'retur.manage',
     'akuntansi.view',
     'akuntansi.manage',
     'users.manage',
@@ -46,6 +48,8 @@ const Map<AppRole, Set<String>> _rolePermissions = {
     'pengadaan.manage',
     'penjualan.view',
     'penjualan.manage',
+    'retur.view',
+    'retur.manage',
     'akuntansi.view',
     'akuntansi.manage',
   },
@@ -56,6 +60,8 @@ const Map<AppRole, Set<String>> _rolePermissions = {
     'pengadaan.manage',
     'penjualan.view',
     'penjualan.manage',
+    'retur.view',
+    'retur.manage',
   },
 };
 
