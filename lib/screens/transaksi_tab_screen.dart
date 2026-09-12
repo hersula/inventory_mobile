@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import 'pengadaan/pengadaan_screen.dart';
 import 'penjualan/penjualan_screen.dart';
 import 'retur/retur_screen.dart';
+import 'opname/opname_screen.dart';
 
 /// Menggabungkan Pengadaan, Penjualan, dan Retur dalam satu shell tab —
 /// jumlah tab menyesuaikan permission role user (kalau cuma 1 modul yang
@@ -22,6 +23,7 @@ class TransaksiTabScreen extends StatelessWidget {
       if (can(role, 'penjualan.view'))
         const _TransaksiTab('Penjualan', PenjualanScreen(embedded: true), PenjualanScreen(embedded: false)),
       if (can(role, 'retur.view')) const _TransaksiTab('Retur', ReturScreen(embedded: true), ReturScreen(embedded: false)),
+      if (can(role, 'opname.view')) const _TransaksiTab('Opname', OpnameScreen(embedded: true), OpnameScreen(embedded: false)),
     ];
 
     if (visible.isEmpty) return const SizedBox.shrink();
